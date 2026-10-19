@@ -1,0 +1,737 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Montage Studio — Cinema</title>
+<style>
+  :root {
+    --bg-page: #0f1012;
+    --bg-panel: #1a1b1e;
+    --bg-card: #25262a;
+    --bg-pill: #2a2b2f;
+    --bg-rail: #151618;
+    --border: #26272b;
+    --text-1: #e8e9ec;
+    --text-2: #8a8d94;
+    --text-3: #6b6e76;
+    --lime-1: #eaff6e;
+    --lime-2: #c4ee3c;
+    --lime-3: #9fc62c;
+    --green: #3ddc84;
+    --amber: #ffc24d;
+    --red: #ff5a52;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { -webkit-font-smoothing: antialiased; }
+  body {
+    background: var(--bg-page); color: var(--text-1);
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", Inter, Roboto, sans-serif;
+    font-size: 15px; min-height: 100vh;
+  }
+  ::selection { background: rgba(196,238,60,.3); }
+
+  /* ---------- Top bar ---------- */
+  .topbar {
+    height: 52px; display: flex; align-items: center; gap: 10px; width: 100%;
+    padding: 0 clamp(16px, 4vw, 40px);
+    border-bottom: 1px solid var(--border);
+    background: rgba(15,16,18,.85); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+    position: sticky; top: 0; z-index: 30;
+  }
+  .topbar .logo { font-weight: 700; font-size: 14px; letter-spacing: .04em; display: flex; align-items: center; gap: 8px; }
+  .topbar .logo .spark { color: var(--lime-2); }
+
+  /* Language switcher */
+  .langs { margin-left: auto; display: inline-flex; background: var(--bg-pill); border-radius: 8px; padding: 2px; gap: 2px; }
+  .langs button {
+    border: none; background: transparent; color: var(--text-2); cursor: pointer;
+    font: inherit; font-size: 11.5px; font-weight: 600; letter-spacing: .03em;
+    padding: 4px 11px; border-radius: 6px; transition: all .15s;
+  }
+  .langs button.on { background: #3a3c42; color: #fff; }
+  .topbar .status { font-size: 12px; color: var(--text-3); display: flex; align-items: center; gap: 7px; margin-left: 14px; }
+  .topbar .status::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--green); box-shadow: 0 0 8px var(--green); }
+  .topbar .status.off::before { background: var(--text-3); box-shadow: none; }
+
+  .stage { max-width: 1060px; margin: 0 auto; padding: 0 clamp(12px, 3vw, 24px) 100px; }
+
+  /* ---------- Headline ---------- */
+  .headline {
+    text-align: center; padding: 56px 0 10px;
+    font-size: clamp(28px, 4.4vw, 44px); font-weight: 800; line-height: 1.1;
+    letter-spacing: .01em; text-transform: uppercase;
+    background: linear-gradient(180deg, #ffffff 20%, #9a9ca2 95%);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  .tagline { text-align: center; color: var(--text-3); font-size: 12px; letter-spacing: .14em; text-transform: uppercase; margin-bottom: 36px; }
+
+  /* ---------- Composer wrap ---------- */
+  .composer-wrap { display: flex; gap: 8px; align-items: stretch; justify-content: center; }
+
+  .mode-rail {
+    flex: none; width: 80px; background: var(--bg-rail); border: 1px solid var(--border);
+    border-radius: 16px; padding: 6px; display: flex; flex-direction: column; gap: 4px; justify-content: center;
+  }
+  .mode {
+    border: none; background: transparent; color: var(--text-2); cursor: pointer;
+    border-radius: 11px; padding: 12px 4px; font: inherit; font-size: 11.5px;
+    display: flex; flex-direction: column; align-items: center; gap: 6px; transition: all .15s;
+  }
+  .mode .ic { font-size: 19px; }
+  .mode.on { background: var(--bg-pill); color: #fff; font-weight: 600; }
+
+  .panel {
+    flex: 1; max-width: 900px; background: var(--bg-panel); border: 1px solid var(--border);
+    border-radius: 20px; padding: 8px; box-shadow: 0 24px 60px rgba(0,0,0,.45);
+  }
+
+  /* Control cards row */
+  .refs { display: flex; gap: 6px; }
+  .ref-card {
+    flex: 1; min-width: 0; min-height: 48px; background: var(--bg-card); border-radius: 10px;
+    display: flex; align-items: center; gap: 10px; padding: 7px 12px; cursor: pointer;
+    border: 1px solid transparent; transition: border-color .15s, background .15s; user-select: none;
+  }
+  .ref-card:hover { border-color: #34363c; background: #282a2e; }
+  .ref-card .ic {
+    width: 32px; height: 32px; border-radius: 7px; flex: none;
+    display: grid; place-items: center; font-size: 16px; background: #2e2f33;
+  }
+  .ref-card .t { display: flex; flex-direction: column; min-width: 0; }
+  .ref-card .lbl { font-size: 11px; color: var(--text-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .ref-card .val { font-size: 13.5px; font-weight: 500; color: var(--text-1); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .ref-card .val.set { color: var(--lime-2); }
+
+  /* Prompt + generate */
+  .prompt-area { display: flex; gap: 8px; margin-top: 8px; align-items: flex-end; }
+  .prompt-input { flex: 1; background: var(--bg-panel); border-radius: 12px; padding: 14px 16px; }
+  .prompt-input textarea {
+    width: 100%; min-height: 76px; border: none; outline: none; resize: vertical;
+    background: transparent; color: var(--text-1); font: inherit; font-size: 14.5px; line-height: 1.5;
+  }
+  .prompt-input textarea::placeholder { color: var(--text-3); }
+
+  .generate {
+    flex: none; width: 132px; height: 82px; border: none; cursor: pointer; border-radius: 13px;
+    background: linear-gradient(180deg, var(--lime-1), var(--lime-2));
+    box-shadow: 0 3px 0 var(--lime-3), 0 10px 26px rgba(196,238,60,.22);
+    color: #111; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px;
+    font: inherit; transition: transform .1s, box-shadow .1s;
+  }
+  .generate:hover { transform: translateY(-1px); box-shadow: 0 4px 0 var(--lime-3), 0 14px 30px rgba(196,238,60,.3); }
+  .generate:active { transform: translateY(2px); box-shadow: 0 1px 0 var(--lime-3); }
+  .generate:disabled { filter: grayscale(.6) brightness(.7); cursor: default; transform: none; }
+  .generate .g-label { font-size: 12.5px; font-weight: 800; letter-spacing: .1em; }
+  .generate .g-cost { font-size: 11px; font-weight: 700; color: #3a4a08; display: flex; gap: 4px; align-items: center; }
+
+  /* Toolbar */
+  .toolbar { display: flex; align-items: center; gap: 6px; margin-top: 8px; flex-wrap: wrap; padding: 2px; }
+  .pill {
+    height: 30px; display: inline-flex; align-items: center; gap: 7px;
+    background: var(--bg-pill); border: 1px solid transparent; border-radius: 8px;
+    padding: 0 11px; font-size: 12.5px; color: #d4d6db; cursor: pointer; user-select: none;
+    transition: border-color .15s, background .15s; white-space: nowrap;
+  }
+  .pill:hover { border-color: #3a3c42; background: #303136; }
+  .pill .ic { font-size: 13px; color: var(--text-2); }
+  .pill.model .ic { color: var(--lime-2); }
+  .pill .chev { color: var(--text-3); font-size: 10px; margin-left: 1px; }
+  .pill.audio-on { color: var(--lime-2); }
+  .stepper { display: inline-flex; align-items: center; background: var(--bg-pill); border-radius: 8px; height: 30px; overflow: hidden; }
+  .stepper button {
+    border: none; background: transparent; color: var(--text-2); width: 30px; height: 100%;
+    font-size: 15px; cursor: pointer; transition: background .12s;
+  }
+  .stepper button:hover { background: #34363c; color: #fff; }
+  .stepper .v { font-size: 12.5px; color: var(--text-1); min-width: 34px; text-align: center; }
+  .stepper .v span { color: var(--text-3); }
+
+  /* Dropdown menu */
+  .menu {
+    position: fixed; z-index: 100; min-width: 220px; max-width: 340px;
+    background: #202126; border: 1px solid #303238; border-radius: 12px;
+    padding: 5px; box-shadow: 0 18px 50px rgba(0,0,0,.6); display: none;
+  }
+  .menu.open { display: block; }
+  .menu .mi {
+    padding: 8px 12px; border-radius: 8px; font-size: 13px; color: var(--text-1);
+    cursor: pointer; display: flex; align-items: center; gap: 9px; transition: background .1s;
+  }
+  .menu .mi:hover { background: #2b2d33; }
+  .menu .mi.sel { color: var(--lime-2); font-weight: 600; }
+  .menu .mi.sel::after { content: "✓"; margin-left: auto; font-size: 12px; }
+  .menu .mi .sub { color: var(--text-3); font-size: 11px; margin-left: auto; }
+  .menu .sep { height: 1px; background: #303238; margin: 4px 6px; }
+  .menu .mi.danger { color: var(--red); }
+
+  .toast {
+    display: none; margin: 16px auto 0; max-width: 640px; text-align: center;
+    font-size: 13px; color: var(--text-2); background: var(--bg-panel);
+    border: 1px solid var(--border); border-radius: 10px; padding: 10px 16px;
+  }
+  .toast b { color: var(--lime-2); }
+
+  /* ---------- Sections ---------- */
+  h2.sec {
+    font-size: 12px; font-weight: 700; letter-spacing: .16em; text-transform: uppercase;
+    color: var(--text-2); margin: 64px 0 18px; text-align: center;
+  }
+  h2.sec::before, h2.sec::after { content: "—"; margin: 0 12px; color: #2e3036; }
+
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
+  .card {
+    background: var(--bg-panel); border: 1px solid var(--border); border-radius: 16px;
+    overflow: hidden; cursor: pointer; transition: transform .16s, border-color .16s;
+  }
+  .card:hover { transform: translateY(-2px); border-color: #34363c; }
+  .poster { position: relative; aspect-ratio: 16/9; background: #131417; }
+  .poster img, .poster video { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .flag {
+    position: absolute; top: 10px; left: 10px; font-size: 10.5px; font-weight: 700; letter-spacing: .04em;
+    padding: 4px 10px; border-radius: 980px; background: rgba(15,16,18,.8);
+    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); color: var(--text-2);
+  }
+  .flag.live { color: var(--lime-2); }
+  .flag.gate { color: var(--amber); }
+  .card .body { padding: 14px 16px 16px; }
+  .card .title { font-size: 14.5px; font-weight: 600; line-height: 1.3; margin-bottom: 11px;
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .bar { height: 3px; border-radius: 2px; background: #26272b; overflow: hidden; margin-bottom: 9px; }
+  .bar i { display: block; height: 100%; background: linear-gradient(90deg, var(--lime-1), var(--lime-2)); transition: width .4s; }
+  .meta { font-size: 11.5px; color: var(--text-3); display: flex; gap: 11px; flex-wrap: wrap; }
+
+  .empty {
+    text-align: center; color: var(--text-3); font-size: 14px; line-height: 1.7;
+    padding: 48px 24px; background: var(--bg-panel); border: 1px dashed #2e3036; border-radius: 16px;
+  }
+  .empty .big { font-size: 38px; margin-bottom: 12px; }
+  .empty b { color: var(--lime-2); }
+
+  .req {
+    display: flex; gap: 14px; align-items: center;
+    background: var(--bg-panel); border: 1px solid var(--border); border-radius: 12px;
+    padding: 14px 18px; margin-bottom: 10px; font-size: 13.5px;
+  }
+  .req .st { font-size: 10.5px; font-weight: 700; letter-spacing: .05em; flex: none; padding: 4px 11px; border-radius: 980px; white-space: nowrap; }
+  .st.queued { background: rgba(196,238,60,.12); color: var(--lime-2); }
+  .st.started, .st.done { background: rgba(61,220,132,.12); color: var(--green); }
+  .req .p { flex: 1; min-width: 0; line-height: 1.45; color: var(--text-1); overflow-wrap: anywhere; }
+  .req .t { color: var(--text-3); font-size: 11.5px; flex: none; max-width: 200px; text-align: right; line-height: 1.5; overflow-wrap: anywhere; }
+
+  /* ---------- Detail sheet ---------- */
+  .overlay {
+    position: fixed; inset: 0; z-index: 50; display: none; overflow-y: auto;
+    background: rgba(8,9,11,.72); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+    padding: 6vh clamp(12px, 6vw, 80px);
+  }
+  .overlay.open { display: block; }
+  .sheet {
+    background: var(--bg-panel); border: 1px solid var(--border); border-radius: 20px;
+    max-width: 860px; margin: 0 auto; padding: 30px; position: relative;
+    box-shadow: 0 30px 80px rgba(0,0,0,.6);
+  }
+  .close {
+    position: absolute; top: 16px; right: 16px; width: 32px; height: 32px; border-radius: 50%;
+    background: var(--bg-pill); border: none; color: var(--text-2); font-size: 15px; cursor: pointer;
+  }
+  .close:hover { color: #fff; background: #34363c; }
+  .sheet h3 { font-size: 22px; font-weight: 700; line-height: 1.2; margin-bottom: 4px; padding-right: 44px; overflow-wrap: anywhere; }
+  .sheet .sub { color: var(--text-3); font-size: 12.5px; margin-bottom: 24px; }
+  .stages { display: flex; flex-direction: column; gap: 2px; }
+  .stage { display: flex; align-items: center; gap: 12px; font-size: 13.5px; padding: 7px 0; }
+  .stage .sdot { width: 9px; height: 9px; border-radius: 50%; flex: none; background: #2e3036; }
+  .sdot.completed { background: var(--green); box-shadow: 0 0 8px rgba(61,220,132,.5); }
+  .sdot.in_progress { background: var(--lime-2); box-shadow: 0 0 8px rgba(196,238,60,.5); animation: pulse 1.6s infinite; }
+  .sdot.awaiting_human { background: var(--amber); box-shadow: 0 0 8px rgba(255,194,77,.5); }
+  .sdot.failed { background: var(--red); }
+  @keyframes pulse { 50% { opacity: .45; } }
+  .stage .nm { color: var(--text-3); }
+  .stage.completed .nm, .stage.in_progress .nm { color: var(--text-1); }
+  .stage .gate-tag { font-size: 10px; color: var(--amber); background: rgba(255,194,77,.12); padding: 2px 9px; border-radius: 980px; margin-left: auto; }
+  .h4 { font-size: 11.5px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: var(--text-2); margin: 26px 0 12px; }
+  .renders video { width: 100%; border-radius: 12px; background: #000; margin-bottom: 14px; }
+  .snaps { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
+  .snaps img, .snaps video { width: 100%; aspect-ratio: 16/9; object-fit: cover; border-radius: 10px; background: #000; }
+
+  @media (max-width: 760px) {
+    .composer-wrap { flex-direction: column; }
+    .mode-rail { width: 100%; flex-direction: row; }
+    .mode { flex-direction: row; flex: 1; justify-content: center; padding: 10px; }
+    .refs { flex-wrap: wrap; }
+    .ref-card { flex: 1 1 45%; }
+    .prompt-area { flex-direction: column; align-items: stretch; }
+    .generate { width: 100%; height: 56px; flex-direction: row; gap: 10px; }
+    .langs { margin-left: auto; }
+    .topbar .status { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <span class="logo"><span class="spark">✦</span> MONTAGE STUDIO</span>
+  <div class="langs" id="langs">
+    <button data-lang="en" class="on">EN</button>
+    <button data-lang="hy">ՀY</button>
+    <button data-lang="ru">RU</button>
+  </div>
+  <span class="status" id="health">live</span>
+</div>
+
+<div class="stage">
+  <h1 class="headline" id="headline"></h1>
+  <div class="tagline" id="tagline"></div>
+
+  <div class="composer-wrap">
+    <nav class="mode-rail">
+      <button class="mode" data-mode="image"><span class="ic">🖼️</span><span id="mode-image-label"></span></button>
+      <button class="mode on" data-mode="video"><span class="ic">🎬</span><span id="mode-video-label"></span></button>
+    </nav>
+
+    <section class="panel">
+      <div class="refs">
+        <div class="ref-card" id="card-refs">
+          <span class="ic">＋</span>
+          <span class="t"><span class="lbl" id="lbl-refs">References</span><span class="val" id="val-refs">0/50</span></span>
+        </div>
+        <div class="ref-card" data-ctl="style">
+          <span class="ic">🎞️</span>
+          <span class="t"><span class="lbl" id="lbl-style">Film setup</span><span class="val" id="val-style">Auto</span></span>
+        </div>
+        <div class="ref-card" data-ctl="camera">
+          <span class="ic">🎥</span>
+          <span class="t"><span class="lbl" id="lbl-camera">Camera</span><span class="val" id="val-camera">Auto</span></span>
+        </div>
+        <div class="ref-card" data-ctl="color">
+          <span class="ic">🎨</span>
+          <span class="t"><span class="lbl" id="lbl-color">Color palette</span><span class="val" id="val-color">Auto</span></span>
+        </div>
+        <div class="ref-card" data-ctl="lighting">
+          <span class="ic">💡</span>
+          <span class="t"><span class="lbl" id="lbl-lighting">Lighting</span><span class="val" id="val-lighting">Auto</span></span>
+        </div>
+      </div>
+
+      <div class="prompt-area">
+        <div class="prompt-input">
+          <textarea id="prompt"></textarea>
+        </div>
+        <button class="generate" id="go">
+          <span class="g-label">GENERATE</span>
+          <span class="g-cost">✦ START</span>
+        </button>
+      </div>
+
+      <div class="toolbar">
+        <span class="pill model" data-ctl="pipeline"><span class="ic">✦</span><span id="val-pipeline">Auto Pipeline</span><span class="chev">›</span></span>
+        <span class="pill" data-ctl="resolution"><span class="ic">◆</span><span id="val-resolution">1080p</span><span class="chev">›</span></span>
+        <span class="pill" data-ctl="aspect"><span class="ic">▭</span><span id="val-aspect">16:9</span><span class="chev">›</span></span>
+        <span class="pill" data-ctl="duration"><span class="ic">◷</span><span id="val-duration">60s</span><span class="chev">›</span></span>
+        <span class="pill audio-on" id="audio-pill"><span class="ic" id="audio-ic">🔊</span><span id="val-audio">On</span></span>
+        <span class="stepper">
+          <button id="var-minus">−</button>
+          <span class="v" id="val-variants">1<span>/4</span></span>
+          <button id="var-plus">＋</button>
+        </span>
+      </div>
+    </section>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <h2 class="sec" id="sec-productions"></h2>
+  <div id="projects"></div>
+
+  <h2 class="sec" id="sec-requests"></h2>
+  <div id="requests"></div>
+</div>
+
+<div class="overlay" id="overlay"><div class="sheet" id="sheet"></div></div>
+<div class="menu" id="menu"></div>
+
+<script>
+const $ = s => document.querySelector(s);
+const MEDIA_EXT = ["mp4","webm","mov"];
+
+/* ================= i18n ================= */
+const I18N = {
+  en: {
+    headline: "BRING YOUR STORIES TO LIFE",
+    tagline: "OpenMontage Cinema · Roland's Studio",
+    live: "live", offline: "offline",
+    modeImage: "Image", modeVideo: "Video",
+    lblRefs: "References", lblStyle: "Film setup", lblCamera: "Camera", lblColor: "Color palette", lblLighting: "Lighting",
+    phVideo: "Describe your scene — shots, light, mood, music…",
+    phImage: "Describe the image or poster you want…",
+    audioOn: "On", audioOff: "Off",
+    secProductions: "Productions", secRequests: "Requests",
+    emptyProjects: `No productions yet.<br>Set up the console above, hit <b>GENERATE</b> and tell Hermes «START».`,
+    emptyRequests: "The queue is empty.",
+    stQueued: "QUEUED", stStarted: "RUNNING", stDone: "DONE",
+    toast: `✓ <b>Order queued.</b> Tell Hermes «START» to begin production.`,
+    err: "Error: ",
+    ago: ["now", "min ago", "h ago", "d ago"],
+    pct: "", flagGate: "⏸ approval", flagLive: "● LIVE",
+    variants: n => n + " variants", noAudio: "no audio",
+    finalVideos: "Final videos", frames: "Frames", liveNow: "live", approval: "approval",
+    refsAdd: "＋ Add reference (URL / YouTube)", refsRemove: "remove",
+    refsConfirm: "Remove this reference?", refsPrompt: "Reference link (YouTube, TikTok, image or video URL):",
+    autoSub: "agent picks the best",
+    subs: {
+      style: { "cinematic":"cinematic", "animation":"animation / Pixar", "documentary":"documentary", "music video":"music video", "3d showcase":"3D object showcase" },
+      camera: { "handheld":"handheld", "drone":"drone / aerial", "static":"static", "dolly":"dolly slide", "crash zoom":"crash zoom", "orbit":"orbit around subject" },
+      color: { "moody dark":"dark, dramatic", "warm golden":"warm golden", "neon":"neon", "pastel":"soft pastel", "monochrome":"black & white", "teal & orange":"Hollywood look" },
+      lighting: { "natural":"natural", "golden hour":"golden hour", "studio":"studio", "neon night":"neon night", "dramatic":"dramatic shadows", "soft diffuse":"soft diffuse" },
+      pipeline: { "Auto Pipeline":"best for the task", "bgm-montage-lite":"real footage + music", "hyperframes":"cinematic AI frames", "remotion":"motion graphics / titles", "blender-3d":"3D worlds", "ink-theater":"stylized 2D theater" }
+    }
+  },
+  hy: {
+    headline: "ԿԵՆԴԱՆԱՑՐՈՒ ՔՈ ՊԱՏՄՈՒԹՅՈՒՆՆԵՐԸ",
+    tagline: "OpenMontage Cinema · Ռոլանդի ստուդիա",
+    live: "ուղիղ կապ", offline: "անջատված",
+    modeImage: "Նկար", modeVideo: "Տեսանյութ",
+    lblRefs: "Ռեֆերենսներ", lblStyle: "Ֆիլմի կարգավորում", lblCamera: "Տեսախցիկ", lblColor: "Գունային պալիտրա", lblLighting: "Լուսավորություն",
+    phVideo: "Նկարագրիր տեսարանը — կադրեր, լույս, տրամադրություն, երաժշտություն…",
+    phImage: "Նկարագրիր, թե ինչ նկար կամ պոստեր ես ուզում…",
+    audioOn: "Միացված", audioOff: "Անջատված",
+    secProductions: "Արտադրություններ", secRequests: "Պատվերներ",
+    emptyProjects: `Դեռ արտադրություն չկա։<br>Կարգավորիր կոնսոլը վերևում, սեղմիր <b>GENERATE</b> և ասա Hermes-ին՝ «START»։`,
+    emptyRequests: "Հերթը դատարկ է։",
+    stQueued: "ՀԵՐԹՈՒՄ", stStarted: "ԱՇԽԱՏՈՒՄ Է", stDone: "ՊԱՏՐԱՍՏ Է",
+    toast: `✓ <b>Պատվերը գրանցված է։</b> Ասա Hermes-ին «START»՝ արտադրությունը սկսելու համար։`,
+    err: "Սխալ՝ ",
+    ago: ["հիմա", "րոպե առաջ", "ժամ առաջ", "օր առաջ"],
+    pct: "% պատրաստ", flagGate: "⏸ հաստատում", flagLive: "● LIVE",
+    variants: n => n + " տարբերակ", noAudio: "առանց ձայնի",
+    finalVideos: "Պատրաստի տեսանյութեր", frames: "Կադրեր", liveNow: "ուղիղ եթերում", approval: "հաստատում",
+    refsAdd: "＋ Ավելացնել ռեֆերենս (URL / YouTube)", refsRemove: "հեռացնել",
+    refsConfirm: "Հեռացնե՞լ այս ռեֆերենսը։", refsPrompt: "Ռեֆերենս հղում (YouTube, TikTok, նկար կամ տեսանյութ URL)՝",
+    autoSub: "agent-ը ընտրում է լավագույնը",
+    subs: {
+      style: { "cinematic":"կինեմատիկ", "animation":"անիմացիա / Pixar", "documentary":"վավերագրական", "music video":"երաժշտական տեսահոլովակ", "3d showcase":"3D օբյեկտների շոու" },
+      camera: { "handheld":"ձեռքի տեսախցիկ", "drone":"դրոն / օդային", "static":"ստատիկ", "dolly":"դոլի սահում", "crash zoom":"կտրուկ զում", "orbit":"պտույտ օբյեկտի շուրջ" },
+      color: { "moody dark":"մուգ, դրամատիկ", "warm golden":"տաք ոսկեգույն", "neon":"նեոն", "pastel":"փափուկ պաստել", "monochrome":"սև-սպիտակ", "teal & orange":"հոլիվուդյան" },
+      lighting: { "natural":"բնական", "golden hour":"ոսկե ժամ", "studio":"ստուդիային", "neon night":"նեոնային գիշեր", "dramatic":"դրամատիկ ստվերներ", "soft diffuse":"փափուկ ցրված" },
+      pipeline: { "Auto Pipeline":"լավագույնը ըստ խնդրի", "bgm-montage-lite":"իրական ֆուտաժ + երաժշտություն", "hyperframes":"կինեմատիկ AI կադրեր", "remotion":"motion graphics / տիտրեր", "blender-3d":"3D աշխարհներ", "ink-theater":"ոճավորված 2D թատրոն" }
+    }
+  },
+  ru: {
+    headline: "ОЖИВИ СВОИ ИСТОРИИ",
+    tagline: "OpenMontage Cinema · Студия Роланда",
+    live: "на связи", offline: "офлайн",
+    modeImage: "Фото", modeVideo: "Видео",
+    lblRefs: "Референсы", lblStyle: "Стиль фильма", lblCamera: "Камера", lblColor: "Палитра цветов", lblLighting: "Освещение",
+    phVideo: "Опишите сцену — кадры, свет, настроение, музыка…",
+    phImage: "Опишите, какое изображение или постер вы хотите…",
+    audioOn: "Вкл", audioOff: "Выкл",
+    secProductions: "Производства", secRequests: "Заказы",
+    emptyProjects: `Пока нет производств.<br>Настройте консоль выше, нажмите <b>GENERATE</b> и скажите Hermes «START».`,
+    emptyRequests: "Очередь пуста.",
+    stQueued: "В ОЧЕРЕДИ", stStarted: "В РАБОТЕ", stDone: "ГОТОВО",
+    toast: `✓ <b>Заказ в очереди.</b> Скажите Hermes «START», чтобы начать производство.`,
+    err: "Ошибка: ",
+    ago: ["сейчас", "мин назад", "ч назад", "д назад"],
+    pct: "% готово", flagGate: "⏸ подтверждение", flagLive: "● LIVE",
+    variants: n => n + " вариант(ов)", noAudio: "без звука",
+    finalVideos: "Готовые видео", frames: "Кадры", liveNow: "в эфире", approval: "подтверждение",
+    refsAdd: "＋ Добавить референс (URL / YouTube)", refsRemove: "удалить",
+    refsConfirm: "Удалить этот референс?", refsPrompt: "Ссылка на референс (YouTube, TikTok, фото или видео URL):",
+    autoSub: "агент выберет лучшее",
+    subs: {
+      style: { "cinematic":"кинематографично", "animation":"анимация / Pixar", "documentary":"документальный", "music video":"музыкальное видео", "3d showcase":"3D-шоу объектов" },
+      camera: { "handheld":"ручная камера", "drone":"дрон / аэро", "static":"статично", "dolly":"долли-слайд", "crash zoom":"резкий зум", "orbit":"облёт вокруг объекта" },
+      color: { "moody dark":"тёмная, драматичная", "warm golden":"тёплый золотой", "neon":"неон", "pastel":"мягкий пастель", "monochrome":"чёрно-белая", "teal & orange":"голливудский вид" },
+      lighting: { "natural":"естественный", "golden hour":"золотой час", "studio":"студийный", "neon night":"неоновая ночь", "dramatic":"драматичные тени", "soft diffuse":"мягкий рассеянный" },
+      pipeline: { "Auto Pipeline":"лучший по задаче", "bgm-montage-lite":"реальные кадры + музыка", "hyperframes":"кинематографичные AI-кадры", "remotion":"моушн-графика / титры", "blender-3d":"3D-миры", "ink-theater":"стилизованный 2D-театр" }
+    }
+  }
+};
+
+let LANG = localStorage.getItem("studio-lang") || "en";
+const t = () => I18N[LANG] || I18N.en;
+
+/* ================= State ================= */
+const state = {
+  mode: "video",
+  style: "Auto", camera: "Auto", color: "Auto", lighting: "Auto",
+  pipeline: "Auto Pipeline", resolution: "1080p", aspect: "16:9",
+  duration: "60s", audio: true, variants: 1, references: []
+};
+
+const OPTIONS = {
+  style: ["Auto", "cinematic", "animation", "documentary", "music video", "3d showcase"],
+  camera: ["Auto", "handheld", "drone", "static", "dolly", "crash zoom", "orbit"],
+  color: ["Auto", "moody dark", "warm golden", "neon", "pastel", "monochrome", "teal & orange"],
+  lighting: ["Auto", "natural", "golden hour", "studio", "neon night", "dramatic", "soft diffuse"],
+  pipeline: ["Auto Pipeline", "bgm-montage-lite", "hyperframes", "remotion", "blender-3d", "ink-theater"],
+  resolution: ["720p", "1080p", "4K"],
+  aspect: [["16:9", {en:"horizontal", hy:"հորիզոնական", ru:"горизонтально"}],
+           ["9:16", {en:"vertical / Reels", hy:"ուղղահայաց / Reels", ru:"вертикально / Reels"}],
+           ["1:1", {en:"square", hy:"քառակուսի", ru:"квадрат"}]],
+  duration: ["30s", "60s", "90s", "120s"]
+};
+
+function subFor(key, value) {
+  const L = t();
+  if (value === "Auto" || value === "Auto Pipeline") return key === "pipeline" ? L.subs.pipeline["Auto Pipeline"] : L.autoSub;
+  if (key === "aspect") {
+    const found = OPTIONS.aspect.find(a => Array.isArray(a) && a[0] === value);
+    return found ? found[1][LANG] || found[1].en : "";
+  }
+  return (L.subs[key] && L.subs[key][value]) || "";
+}
+function aspectOptions() { return OPTIONS.aspect.map(a => Array.isArray(a) ? a[0] : a); }
+function optionsFor(key) { return key === "aspect" ? aspectOptions() : OPTIONS[key]; }
+
+/* ================= Language ================= */
+function applyLang() {
+  const L = t();
+  document.documentElement.lang = LANG;
+  $("#headline").textContent = L.headline;
+  $("#tagline").textContent = L.tagline;
+  $("#mode-image-label").textContent = L.modeImage;
+  $("#mode-video-label").textContent = L.modeVideo;
+  $("#lbl-refs").textContent = L.lblRefs;
+  $("#lbl-style").textContent = L.lblStyle;
+  $("#lbl-camera").textContent = L.lblCamera;
+  $("#lbl-color").textContent = L.lblColor;
+  $("#lbl-lighting").textContent = L.lblLighting;
+  $("#sec-productions").textContent = L.secProductions;
+  $("#sec-requests").textContent = L.secRequests;
+  $("#prompt").placeholder = state.mode === "image" ? L.phImage : L.phVideo;
+  document.querySelectorAll("#langs button").forEach(b => b.classList.toggle("on", b.dataset.lang === LANG));
+  syncAll();
+}
+document.querySelectorAll("#langs button").forEach(b => b.addEventListener("click", () => {
+  LANG = b.dataset.lang;
+  localStorage.setItem("studio-lang", LANG);
+  applyLang();
+  tick();
+}));
+
+/* ================= Dropdown ================= */
+const menu = $("#menu");
+function openMenu(anchor, items, onPick) {
+  menu.innerHTML = "";
+  items.forEach(it => {
+    if (it === "-") { const s = document.createElement("div"); s.className = "sep"; menu.appendChild(s); return; }
+    const d = document.createElement("div");
+    d.className = "mi" + (it.sel ? " sel" : "") + (it.danger ? " danger" : "");
+    d.innerHTML = `<span>${it.label}</span>` + (it.sub ? `<span class="sub">${it.sub}</span>` : "");
+    d.addEventListener("click", ev => {
+      ev.stopPropagation();
+      closeMenu();
+      if (it.danger && !confirm(it.confirm || "")) return;
+      if (onPick) onPick(it);
+    });
+    menu.appendChild(d);
+  });
+  const r = anchor.getBoundingClientRect();
+  menu.style.left = Math.max(10, Math.min(r.left, window.innerWidth - 260)) + "px";
+  menu.classList.add("open");
+  const mh = menu.offsetHeight;
+  let top = r.bottom + 6;
+  if (top + mh > window.innerHeight - 10) top = Math.max(10, r.top - mh - 6);
+  menu.style.top = top + "px";
+}
+function closeMenu() { menu.classList.remove("open"); }
+document.addEventListener("click", () => closeMenu());
+document.addEventListener("keydown", e => { if (e.key === "Escape") { closeMenu(); closeDetail(); } });
+
+/* ================= Control sync ================= */
+function syncVal(key) {
+  const el = $("#val-" + key);
+  if (!el) return;
+  let v = state[key];
+  if (key === "audio") v = v ? t().audioOn : t().audioOff;
+  el.textContent = v;
+  const card = el.closest(".ref-card");
+  if (card) card.querySelector(".val").classList.toggle("set", v !== "Auto");
+  $("#audio-ic").textContent = state.audio ? "🔊" : "🔇";
+}
+function syncAll() {
+  ["style","camera","color","lighting","pipeline","resolution","aspect","duration","audio"].forEach(syncVal);
+  $("#val-variants").innerHTML = state.variants + "<span>/4</span>";
+  $("#val-refs").textContent = state.references.length + "/50";
+  $("#audio-pill").classList.toggle("audio-on", state.audio);
+}
+
+document.querySelectorAll("[data-ctl]").forEach(el => {
+  el.addEventListener("click", ev => {
+    ev.stopPropagation();
+    const key = el.dataset.ctl;
+    const items = optionsFor(key).map(v => ({ label: v, sub: subFor(key, v), sel: state[key] === v }));
+    openMenu(el, items, it => { state[key] = it.label; syncVal(key); });
+  });
+});
+
+$("#audio-pill").addEventListener("click", ev => { ev.stopPropagation(); state.audio = !state.audio; syncVal("audio"); });
+$("#var-minus").addEventListener("click", () => { state.variants = Math.max(1, state.variants - 1); syncVal("variants"); });
+$("#var-plus").addEventListener("click", () => { state.variants = Math.min(4, state.variants + 1); syncVal("variants"); });
+
+document.querySelectorAll(".mode").forEach(b => b.addEventListener("click", () => {
+  document.querySelectorAll(".mode").forEach(x => x.classList.remove("on"));
+  b.classList.add("on");
+  state.mode = b.dataset.mode;
+  $("#prompt").placeholder = state.mode === "image" ? t().phImage : t().phVideo;
+}));
+
+$("#card-refs").addEventListener("click", ev => {
+  ev.stopPropagation();
+  const L = t();
+  const items = state.references.map((r, i) => ({
+    label: r.length > 34 ? r.slice(0, 34) + "…" : r, sub: L.refsRemove,
+    danger: true, confirm: L.refsConfirm, idx: i
+  }));
+  items.push("-", { label: L.refsAdd, idx: -1 });
+  openMenu($("#card-refs"), items, it => {
+    if (it.idx >= 0) state.references.splice(it.idx, 1);
+    else {
+      const url = prompt(L.refsPrompt);
+      if (url && url.trim() && state.references.length < 50) state.references.push(url.trim());
+    }
+    syncVal("references");
+  });
+});
+
+/* ================= Generate ================= */
+$("#go").addEventListener("click", async () => {
+  const prompt = $("#prompt").value.trim();
+  if (!prompt) { $("#prompt").focus(); return; }
+  $("#go").disabled = true;
+  try {
+    const r = await fetch("/api/request", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ...state, prompt })
+    });
+    if (!r.ok) throw new Error(await r.text());
+    $("#prompt").value = "";
+    const tt = $("#toast");
+    tt.innerHTML = t().toast;
+    tt.style.display = "block";
+    setTimeout(() => tt.style.display = "none", 7000);
+    renderRequests();
+  } catch (e) { alert(t().err + e.message); }
+  $("#go").disabled = false;
+});
+
+/* ================= Data ================= */
+function mediaUrl(pid, path) { return `/media/${pid}/${encodeURI(path).replace(/%2F/g, "/")}`; }
+function mediaTag(pid, path) {
+  const ext = path.split(".").pop().toLowerCase();
+  return MEDIA_EXT.includes(ext)
+    ? `<video src="${mediaUrl(pid, path)}" muted preload="metadata"></video>`
+    : `<img src="${mediaUrl(pid, path)}" loading="lazy">`;
+}
+function timeAgo(ts) {
+  if (!ts) return "";
+  const [now, m, h, d] = t().ago;
+  const s = Math.max(0, Date.now() / 1000 - ts);
+  if (s < 60) return now;
+  if (s < 3600) return Math.floor(s / 60) + " " + m;
+  if (s < 86400) return Math.floor(s / 3600) + " " + h;
+  return Math.floor(s / 86400) + " " + d;
+}
+
+let openProject = null;
+
+async function renderProjects() {
+  let list = [];
+  try { list = await (await fetch("/api/projects")).json(); } catch (e) {}
+  const el = $("#projects");
+  const L = t();
+  if (!list.length) {
+    el.innerHTML = `<div class="empty"><div class="big">🎥</div>${L.emptyProjects}</div>`;
+    return;
+  }
+  el.innerHTML = `<div class="grid">` + list.map(p => {
+    const stages = p.stage_states || [];
+    const done = stages.filter(s => s.status === "completed").length;
+    const pct = stages.length ? Math.round(100 * done / stages.length) : 0;
+    const flag = p.awaiting_human ? `<span class="flag gate">${L.flagGate}</span>`
+      : p.live ? `<span class="flag live">${L.flagLive}</span>` : "";
+    const poster = p.poster ? mediaTag(p.project_id, p.poster)
+      : `<div style="display:grid;place-items:center;height:100%;font-size:34px">🎞️</div>`;
+    return `<div class="card" onclick="openDetail('${p.project_id}')">
+      <div class="poster">${poster}${flag}</div>
+      <div class="body">
+        <div class="title">${p.title || p.project_id}</div>
+        <div class="bar"><i style="width:${pct}%"></i></div>
+        <div class="meta">
+          <span>${pct}${L.pct || "%"}</span>
+          ${p.active_stage ? `<span>▶ ${p.active_stage}</span>` : ""}
+          ${p.render_count ? `<span>🎬 ${p.render_count}</span>` : ""}
+          <span>${timeAgo(p.last_activity)}</span>
+        </div>
+      </div>
+    </div>`;
+  }).join("") + `</div>`;
+}
+
+async function renderRequests() {
+  let list = [];
+  try { list = await (await fetch("/api/requests")).json(); } catch (e) {}
+  const el = $("#requests");
+  const L = t();
+  if (!list.length) { el.innerHTML = `<div class="empty" style="padding:26px">${L.emptyRequests}</div>`; return; }
+  const label = { queued: L.stQueued, started: L.stStarted, done: L.stDone };
+  el.innerHTML = list.slice(0, 12).map(r => {
+    const bits = [r.duration, r.aspect, r.resolution,
+      (r.style && r.style !== "Auto") ? r.style : null,
+      (r.pipeline && r.pipeline !== "Auto Pipeline") ? r.pipeline : null,
+      r.audio === false ? L.noAudio : null,
+      (r.references || []).length ? "📎" + r.references.length : null
+    ].filter(Boolean).join(" · ");
+    return `<div class="req">
+      <span class="st ${r.status}">${label[r.status] || r.status}</span>
+      <span class="p">${r.mode === "image" ? "🖼️ " : ""}${r.prompt}</span>
+      <span class="t">${bits}${r.variants > 1 ? `<br>${L.variants(r.variants)}` : ""}</span>
+    </div>`;
+  }).join("");
+}
+
+async function openDetail(pid) { openProject = pid; $("#overlay").classList.add("open"); await renderDetail(); }
+function closeDetail() { openProject = null; $("#overlay").classList.remove("open"); }
+
+async function renderDetail() {
+  if (!openProject) return;
+  let st;
+  try { st = await (await fetch(`/api/project/${openProject}`)).json(); } catch (e) { return; }
+  const L = t();
+  const stages = (st.stages || []).map(s => `<div class="stage ${s.status}">
+      <span class="sdot ${s.status}"></span><span class="nm">${s.name}</span>
+      ${s.gated ? `<span class="gate-tag">${L.approval}</span>` : ""}
+    </div>`).join("");
+  const renders = (st.media?.renders || []).map(r =>
+    `<video src="${mediaUrl(st.project_id, r.path)}" controls preload="metadata"></video>`).join("");
+  const snaps = (st.media?.snapshots || []).slice(0, 12).map(s => mediaTag(st.project_id, s.path)).join("");
+  $("#sheet").innerHTML = `
+    <button class="close" onclick="closeDetail()">✕</button>
+    <h3>${st.title || st.project_id}</h3>
+    <div class="sub">${st.pipeline?.pipeline_type || ""}${st.live ? " · " + L.liveNow : ""} · ${timeAgo(st.last_activity)}</div>
+    <div class="stages">${stages}</div>
+    ${renders ? `<div class="h4">${L.finalVideos}</div><div class="renders">${renders}</div>` : ""}
+    ${snaps ? `<div class="h4">${L.frames}</div><div class="snaps">${snaps}</div>` : ""}`;
+}
+
+$("#overlay").addEventListener("click", e => { if (e.target === $("#overlay")) closeDetail(); });
+
+/* ================= Heartbeat ================= */
+async function tick() {
+  const L = t();
+  try {
+    const h = await fetch("/api/health");
+    $("#health").textContent = h.ok ? L.live : L.offline;
+    $("#health").classList.toggle("off", !h.ok);
+  } catch (e) { $("#health").textContent = L.offline; $("#health").classList.add("off"); }
+  await renderProjects();
+  await renderRequests();
+  if (openProject) await renderDetail();
+}
+applyLang();
+tick();
+setInterval(tick, 5000);
+</script>
+</body>
+</html>

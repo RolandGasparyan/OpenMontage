@@ -1,0 +1,18 @@
+{
+  "id": "20261019-002843",
+  "prompt": "Judge Day",
+  "status": "queued",
+  "created": 1792394923.129447,
+  "color": "Auto",
+  "style": "Auto",
+  "duration": "60s",
+  "lighting": "Auto",
+  "aspect": "16:9",
+  "variants": 1,
+  "pipeline": "Auto Pipeline",
+  "resolution": "1080p",
+  "audio": true,
+  "camera": "Auto",
+  "mode": "video",
+  "references": []
+}

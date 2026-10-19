@@ -1,0 +1,18 @@
+{
+  "id": "20261018-225250",
+  "prompt": "MONK SITTING SAND MDIDATING ON MOUNTIANS",
+  "status": "queued",
+  "created": 1792389170.816511,
+  "camera": "Auto",
+  "variants": 1,
+  "audio": true,
+  "mode": "video",
+  "style": "Auto",
+  "references": [],
+  "aspect": "16:9",
+  "resolution": "1080p",
+  "duration": "60s",
+  "color": "Auto",
+  "lighting": "Auto",
+  "pipeline": "Auto Pipeline"
+}
