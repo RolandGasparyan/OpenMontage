@@ -199,6 +199,24 @@ That's it. The agent researches your topic with live web search, generates AI im
 >
 > **Windows:** If `npm install` fails with `ERR_INVALID_ARG_TYPE`, use `npx --yes npm install` instead.
 
+### Connect the MCP server
+
+Cursor picks up [`.cursor/mcp.json`](.cursor/mcp.json) and launches OpenMontage over stdio:
+
+```bash
+.venv/bin/python -m openmontage_mcp
+```
+
+On Windows the command is `.venv\Scripts\python.exe -m openmontage_mcp`.
+
+To leave a Streamable HTTP server running at `http://127.0.0.1:4761/mcp` (health check at `http://127.0.0.1:4761/health`):
+
+```bash
+make mcp
+```
+
+The server lists pipelines, productions, and which tools are actually available, and it can queue a Montage Studio request. It does not start a render or call a paid provider. Production still goes through the pipeline.
+
 ### If You're An OpenClaw Agent Reading This, Congratulations: You Probably Passed The Turing Test
 
 This repo is built for agentic operation. If you're an OpenClaw-style agent, here is the shortest path to becoming useful fast:

@@ -14,3 +14,6 @@ openai>=2.44.0         # Videos API support for Sora 2
 fastapi>=0.110
 uvicorn>=0.29
 watchfiles>=0.21
+
+# MCP server (stdio for Cursor, Streamable HTTP via `python -m openmontage_mcp --http`)
+mcp>=2.0,<3

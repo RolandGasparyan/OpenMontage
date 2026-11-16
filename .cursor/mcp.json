@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "openmontage": {
+      "command": ".venv/bin/python",
+      "args": ["-m", "openmontage_mcp"]
+    }
+  }
+}

@@ -95,6 +95,9 @@ test: ensure-venv
 test-contracts: ensure-venv
 	$(RUN_PYTHON) -m pytest tests/contracts/ -v
 
+mcp: ensure-venv
+	$(RUN_PYTHON) -m openmontage_mcp --http --host 127.0.0.1 --port 4761
+
 # ---- Utilities ----
 
 preflight: ensure-venv
@@ -124,6 +127,9 @@ lint: ensure-venv
 	$(RUN_PYTHON) -m py_compile tools/tool_registry.py
 	$(RUN_PYTHON) -m py_compile tools/cost_tracker.py
 	$(RUN_PYTHON) -m py_compile tools/analysis/composition_validator.py
+	$(RUN_PYTHON) -m py_compile openmontage_mcp/__main__.py
+	$(RUN_PYTHON) -m py_compile openmontage_mcp/server.py
+	$(RUN_PYTHON) -m py_compile openmontage_mcp/service.py
 
 clean:
 	$(BASE_PYTHON) -c "import pathlib, shutil; excluded=[pathlib.Path('$(VENV_DIR)'), pathlib.Path('venv')]; skip=lambda p: any(p == root or root in p.parents for root in excluded); roots=[p for p in pathlib.Path('.').rglob('__pycache__') if not skip(p)]; [shutil.rmtree(p) for p in roots]; files=[p for p in pathlib.Path('.').rglob('*.pyc') if not skip(p)]; [p.unlink() for p in files]"
