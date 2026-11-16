@@ -199,6 +199,15 @@ Infrastructure files:
 - `lib/checkpoint.py` — read/write checkpoints, stage validation
 - `tools/cost_tracker.py` — budget governance
 - `lib/pipeline_loader.py` — manifest loading and helpers
+- `openmontage_mcp/` — MCP server. Cursor connects over stdio via `.cursor/mcp.json`. `python -m openmontage_mcp --http` serves Streamable HTTP at `http://127.0.0.1:4761/mcp`. The server reports pipelines, projects, tool availability, and the Studio request queue. `openmontage_submit_request` only queues a request. It does not start a pipeline or call a paid provider. Production still follows this guide.
+
+## MCP Server
+
+The MCP server is a status and queue interface, not a second orchestrator.
+
+- Read `openmontage_health`, `openmontage_list_pipelines`, `openmontage_get_pipeline`, `openmontage_list_projects`, `openmontage_get_project`, `openmontage_list_capabilities`, and `openmontage_list_requests` before assuming what this machine can do.
+- `openmontage_submit_request` writes `studio/requests/<id>.json` with `status: queued`. Wait for the person to say START, then run the normal pipeline.
+- Do not treat an MCP tool result as approval to generate, spend, or skip a stage director skill.
 
 ## Project Directory Convention
 
