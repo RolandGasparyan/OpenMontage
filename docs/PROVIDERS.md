@@ -81,6 +81,9 @@ AZURE_SPEECH_REGION=         # Speech resource region, e.g. eastus
 FAL_KEY=                     # FLUX, Recraft, Kling, Veo, MiniMax video
 MINIMAX_API_KEY=             # MiniMax first-party image + MiniMax H3 video generation
 ATLASCLOUD_API_KEY=          # Atlas Cloud image/video gateway
+OPENROUTER_API_KEY=          # OpenRouter LLM + video (default bytedance/seedance-2.5)
+OPENROUTER_BASE_URL=         # Optional; default https://openrouter.ai/api/v1
+OPENROUTER_VIDEO_MODEL=      # Optional; default bytedance/seedance-2.5
 
 # KLING OFFICIAL DIRECT API
 KLING_API_KEY=               # Official Kling video, image, TTS, avatar, lip sync
@@ -117,7 +120,7 @@ speculative model strings.
 | Model | Direct provider | fal.ai | Runway | ComfyUI Partner Nodes | Local ComfyUI |
 |-------|-----------------|--------|--------|-----------------------|---------------|
 | **Gemini Omni Flash** | Google `gemini_omni_video` | `gemini_omni_fal` (T2V, I2V, references, editing) | `runway_video` model `gemini_omni_flash` | `GeminiVideoOmni` (hosted, paid credits) | Not available as local weights |
-| **Seedance 2.5** | Volcengine `seedance_ark` model variant `2.5` | `seedance_video` model version `2.5` | `runway_video` model `seedance2_5` | `ByteDance2TextToVideoNode` (hosted, paid credits) | Not available as local weights |
+| **Seedance 2.5** | OpenRouter `openrouter_video` model `bytedance/seedance-2.5` | Volcengine `seedance_ark` model variant `2.5` | `seedance_video` model version `2.5` | `runway_video` model `seedance2_5` | ComfyUI Partner Node / not local |
 | **MiniMax H3** | `minimax_video` model `MiniMax-H3` | `minimax_fal_video` (`hailuo-03`) | `runway_video` model `hailuo3` | `MinimaxHailuo03TextToVideoNode` (hosted, paid credits) | Supported with official open weights and an exported API workflow |
 
 ComfyUI Partner Nodes run inside the ComfyUI graph but call hosted services;
@@ -213,6 +216,36 @@ The `req_key` for video is `jimeng_ti2v_v30_pro`. Success code is `10000`. Task 
 | Jimeng 3.0 Pro (video) | ~$0.05/sec (check Volcengine console for actual rate) |
 
 ---
+
+### OpenRouter — Seedance 2.5 Video (default video model)
+
+> **One OpenRouter key for LLM + video.** Uses OpenRouter's asynchronous Video API (`POST /api/v1/videos`). Default model is `bytedance/seedance-2.5` (4–30s, 480p/720p/1080p, optional audio and frame/reference images).
+
+**Tool unlocked:** `openrouter_video`
+
+```bash
+OPENROUTER_API_KEY=sk-or-...
+# Optional overrides:
+OPENROUTER_BASE_URL=https://openrouter.ai/api/v1
+OPENROUTER_VIDEO_MODEL=bytedance/seedance-2.5
+```
+
+Example (text-to-video):
+
+```python
+from tools.video.openrouter_video import OpenRouterVideo
+
+OpenRouterVideo().execute({
+    "prompt": "GLOBAL STYLE ... Shot 1: ... Hard cut. AUDIO: No music",
+    "model": "bytedance/seedance-2.5",
+    "duration": 8,
+    "resolution": "720p",
+    "aspect_ratio": "16:9",
+    "output_path": "projects/demo/renders/seedance25.mp4",
+})
+```
+
+Cost is billed by OpenRouter (token / pixel-second pricing). Prefer `resume_job` after a timeout instead of submitting again.
 
 ### Volcengine Ark — Direct Seedance 2.0 and 2.5 Video Generation
 
@@ -1448,6 +1481,7 @@ These tools require only FFmpeg or Python packages — no GPU, no API key.
 | **fal.ai** | `FAL_KEY` | `flux_image`, `recraft_image`, `kling_video`, `veo_video`, `seedance_video`, `gemini_omni_fal`, `minimax_fal_video` | Pay-as-you-go |
 | **Atlas Cloud** | `ATLASCLOUD_API_KEY` | `atlas_image`, `atlas_video` | Pay-as-you-go |
 | **Kling Official** | `KLING_API_KEY` | `kling_official_video`, `kling_official_image`, `kling_tts`, `kling_avatar`, `kling_lip_sync` | Pay-as-you-go |
+| **OpenRouter** | `OPENROUTER_API_KEY` | `openrouter_video` (default `bytedance/seedance-2.5`) | Pay-as-you-go |
 | **Volcengine Ark** | `ARK_API_KEY` | `seedance_ark` | Pay-as-you-go |
 | **MiniMax direct** | `MINIMAX_API_KEY` | `minimax_image`, `minimax_video` | Pay-as-you-go |
 | **OpenAI** | `OPENAI_API_KEY` | `openai_tts`, `openai_image` | Paid only |
@@ -1471,7 +1505,7 @@ How many providers cover each capability:
 | Capability | Cloud Providers | Local Providers | Free Options |
 |-----------|----------------|-----------------|--------------|
 | **Image Generation** | FLUX, Kling Official, Grok, Google Imagen, GPT Image 2, Recraft | Local Diffusion | Pexels, Pixabay (stock) |
-| **Video Generation** | Grok, Kling Official, fal.ai, Seedance via Volcengine Ark, Runway, Veo, Gemini Omni, Higgsfield, MiniMax, HeyGen, Tencent Hunyuan, ComfyUI Partner Nodes | WAN, Hunyuan, CogVideo, LTX, ComfyUI WAN, ComfyUI MiniMax H3 | Pexels, Pixabay (stock) |
+| **Video Generation** | Grok, Kling Official, fal.ai, OpenRouter Seedance 2.5, Seedance via Volcengine Ark, Runway, Veo, Gemini Omni, Higgsfield, MiniMax, HeyGen, Tencent Hunyuan, ComfyUI Partner Nodes | WAN, Hunyuan, CogVideo, LTX, ComfyUI WAN, ComfyUI MiniMax H3 | Pexels, Pixabay (stock) |
 | **Text-to-Speech** | Azure AI Speech, ElevenLabs, fish.audio, Google TTS, Kling Official, OpenAI | Piper | Piper, Google free tier, ElevenLabs free tier, Azure free tier, fish.audio s2.1-pro-free |
 | **Music Generation** | ElevenLabs, Suno, Google Lyria | — | ElevenLabs free tier |
 | **Post-Production** | — | FFmpeg (compose, stitch, trim, mix, enhance, grade) | All free |
