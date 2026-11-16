@@ -1,7 +1,7 @@
 ---
 name: seedance-2-5
 description: |
-  Generate 4-30 second cinematic video with ByteDance Seedance 2.5 through fal.ai, Volcengine Ark, Runway, or ComfyUI Partner Nodes. Use for long single generations, synchronized audio, and large multimodal reference sets (up to 30 images, 10 videos, and 10 audio clips). Also covers the 2.5 prompt contract: section order, multi-shot "Hard cut" breakdown, named locks for continuity across cuts, the asset and character-sheet method, voice conditioning, and iteration discipline.
+  Generate 4-30 second cinematic video with ByteDance Seedance 2.5 through OpenRouter, fal.ai, Volcengine Ark, Runway, or ComfyUI Partner Nodes. Use for long single generations, synchronized audio, and large multimodal reference sets (up to 30 images, 10 videos, and 10 audio clips). Also covers the 2.5 prompt contract: section order, multi-shot "Hard cut" breakdown, named locks for continuity across cuts, the asset and character-sheet method, voice conditioning, and iteration discipline.
 ---
 
 # Seedance 2.5
@@ -14,6 +14,7 @@ weights in OpenMontage.
 
 | Route | Tool call | Notes |
 |-------|-----------|-------|
+| OpenRouter | `openrouter_video`, `model: "bytedance/seedance-2.5"` | Async `POST /api/v1/videos`; default when `OPENROUTER_API_KEY` is set. Optional `OPENROUTER_VIDEO_MODEL`. 480p/720p/1080p |
 | fal.ai | `seedance_video`, `model_version: "2.5"` | T2V, I2V, and reference-to-video |
 | Volcengine Ark | `seedance_ark`, `model: "2.5"` | First-party model ID `doubao-seedance-2-5-260628`; custom token price required for cost estimates |
 | Runway | `runway_video`, `model: "seedance2_5"` | T2V, I2V, V2V; 480p/720p |
@@ -22,10 +23,9 @@ weights in OpenMontage.
 Do not invent a Replicate, HeyGen, or Higgsfield identifier when their current
 public API schema does not list Seedance 2.5.
 
-> **Resolution note.** The supported routes above expose 480p and 720p. The model
-> generates 1080p natively on the vendor's own web platform, which is not an
-> OpenMontage route. If a vendor blog cites 1080p or 4K, check which surface it means
-> before promising it in a pipeline.
+> **Resolution note.** Most routes expose 480p and 720p. OpenRouter's
+> `bytedance/seedance-2.5` also lists 1080p. If a vendor blog cites 4K, check
+> which surface it means before promising it in a pipeline.
 
 ## Reference limits
 
